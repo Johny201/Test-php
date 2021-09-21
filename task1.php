@@ -53,18 +53,21 @@ $mysqlConnect = connectToTable($user, $password, $databaseName, $tableName);
 
 function insertDataIntoTable($mysqlConnect, $tableName, $event_id, $event_date, $ticket_adult_price, $ticket_adult_quantity, $ticket_kid_price, $ticket_kid_quantity) {
 	$equal_price = $ticket_adult_price * $ticket_adult_quantity + $ticket_kid_price * $ticket_kid_quantity;
-	$barcode = hash("md5", $event_id.$event_date.$equal_price, $binary = false);
+	
+	do {
+	$datetime = new DateTime();
+	$created = $datetime->format("Y-m-d H:i:s");
+	$barcode = hash("md5", $event_id.$event_date.$equal_price.$created, $binary = false);
 	
 	$result = apiQuery("", $event_id, $event_date, $ticket_adult_price, $ticket_adult_quantity, $ticket_kid_price, $ticket_kid_quantity, $barcode);
 	
 	if($result) {
-		$datetime = new DateTime();
-		$created = $datetime->format("Y-m-d H:i:s");
 	
-		$query = "insert into ".$tableName." (event_id, event_date, ticket_adult_price, ticket_adult_quantity, ticket_kid_price, ticket_kid_quantity, barcode, equal_price, created) values (".$event_id.", \"".$event_date."\", ".$ticket_adult_price.", ".$ticket_adult_quantity.", ".$ticket_kid_price.", ".$ticket_kid_quantity.", \"".$barcode."\", ".$equal_price.", \"".$created."\");";
-		$mysqlConnect->query($query);
-		echo($mysqlConnect->error);
-	}
+			$query = "insert into ".$tableName." (event_id, event_date, ticket_adult_price, ticket_adult_quantity, ticket_kid_price, ticket_kid_quantity, barcode, equal_price, created) values (".$event_id.", \"".$event_date."\", ".$ticket_adult_price.", ".$ticket_adult_quantity.", ".$ticket_kid_price.", ".$ticket_kid_quantity.", \"".$barcode."\", ".$equal_price.", \"".$created."\");";
+			$mysqlConnect->query($query);
+			echo($mysqlConnect->error);
+		}
+	}while($result);
 }
 
 function apiQuery($url, $event_id, $event_date, $ticket_adult_price, $ticket_adult_quantity, $ticket_kid_price, $ticket_kid_quantity, $barcode) {
